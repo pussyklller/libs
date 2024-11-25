@@ -11,9 +11,9 @@ from telethon.tl.types import Document
 from .. import loader, utils
 
 
-class MusicDLLib(loader.Library):
+class MusicalLib(loader.Library):
     developer = "@its_pussykiller"
-    version = (1, 0, 19)
+    version = (2, 0, 0)
 
     def __init__(self):
         self.config = loader.LibraryConfig(

@@ -59,7 +59,7 @@ class MusicalLib(loader.Library):
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
         return system, machine, python_version
 
-    async install_pytg(self):
+    async def install_pytg(self):
         """Установка подходящего файла .whl."""
         platform_info = self.get_platform()
         whl_file = WHL_FILES.get(platform_info)

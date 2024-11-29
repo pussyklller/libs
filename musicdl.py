@@ -1,17 +1,48 @@
+
 import asyncio
-import io
+import platform
+import sys
 import logging
-import typing
-
-import requests
-from telethon.errors.rpcerrorlist import BotResponseTimeoutError
-from telethon.events import MessageEdited, StopPropagation
-from telethon.tl.types import Document
-
+from .. import loader
+import importlib.metadata
 from .. import loader, utils
 
 
-class MusicalLib(loader.Library):
+GITHUB_REPO = "https://github.com/pvssykiller/py-tgcalls_host/tree/main"
+
+WHL_FILES = {
+        ("Windows", "amd64", "3.11"): "py_tgcalls-0.9.7-cp311-cp311-win_amd64.whl",
+        ("Windows", "amd64", "3.10"): "py_tgcalls-0.9.7-cp310-cp310-win_amd64.whl",
+        ("Windows", "amd64", "3.9"): "py_tgcalls-0.9.7-cp39-cp39-win_amd64.whl",
+        ("Windows", "amd64", "3.8"): "py_tgcalls-0.9.7-cp38-cp38-win_amd64.whl",
+        ("Windows", "amd64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-win_amd64.whl",
+
+        ("Linux", "x86_64", "3.11"): "py_tgcalls-0.9.7-cp311-cp311-manylinux2014_x86_64.whl",
+        ("Linux", "x86_64", "3.10"): "py_tgcalls-0.9.7-cp310-cp310-manylinux2014_x86_64.whl",
+        ("Linux", "x86_64", "3.9"): "py_tgcalls-0.9.7-cp39-cp39-manylinux2014_x86_64.whl",
+        ("Linux", "x86_64", "3.8"): "py_tgcalls-0.9.7-cp38-cp38-manylinux2014_x86_64.whl",
+        ("Linux", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-manylinux2014_x86_64.whl",
+
+        ("Linux", "armv7l", "3.11"): "py_tgcalls-0.9.7-cp311-cp311-manylinux2014_armv7l.whl",
+        ("Linux", "armv7l", "3.10"): "py_tgcalls-0.9.7-cp310-cp310-manylinux2014_armv7l.whl",
+        ("Linux", "armv7l", "3.9"): "py_tgcalls-0.9.7-cp39-cp39-manylinux2014_armv7l.whl",
+        ("Linux", "armv7l", "3.8"): "py_tgcalls-0.9.7-cp38-cp38-manylinux2014_armv7l.whl",
+        ("Linux", "armv7l", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-manylinux2014_armv7l.whl",
+
+        ("Linux", "aarch64", "3.11"): "py_tgcalls-0.9.7-cp311-cp311-manylinux2014_aarch64.whl",
+        ("Linux", "aarch64", "3.10"): "py_tgcalls-0.9.7-cp310-cp310-manylinux2014_aarch64.whl",
+        ("Linux", "aarch64", "3.9"): "py_tgcalls-0.9.7-cp39-cp39-manylinux2014_aarch64.whl",
+        ("Linux", "aarch64", "3.8"): "py_tgcalls-0.9.7-cp38-cp38-manylinux2014_aarch64.whl",
+        ("Linux", "aarch64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-manylinux2014_aarch64.whl",
+
+        ("Darwin", "universal2", "3.11"): "py_tgcalls-0.9.7-cp311-cp311-macosx_10_9_universal2.whl",
+        ("Darwin", "universal2", "3.10"): "py_tgcalls-0.9.7-cp310-cp310-macosx_10_9_universal2.whl",
+        ("Darwin", "x86_64", "3.9"): "py_tgcalls-0.9.7-cp39-cp39-macosx_11_0_x86_64.whl",
+        ("Darwin", "x86_64", "3.8"): "py_tgcalls-0.9.7-cp38-cp38-macosx_10_15_x86_64.whl",
+        ("Darwin", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-macosx_10_15_x86_64.whl",
+    }
+
+class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 
@@ -19,140 +50,43 @@ class MusicalLib(loader.Library):
         self.config = loader.LibraryConfig(
             loader.ConfigValue(
                 "timeout",
-                40,
-                "Timeout for downloading",
+                30,
+                "Timeout for installation (in seconds)",
                 validator=loader.validators.Integer(minimum=5),
-            ),
-            loader.ConfigValue(
-                "retries",
-                3,
-                "Number of retries for downloading",
-                validator=loader.validators.Integer(minimum=0),
-            ),
-            loader.ConfigValue(
-                "lossless_priority",
-                False,
-                "If True, lossless music will be downloaded first",
-                validator=loader.validators.Boolean(),
-            ),
-        )
-
-    async def _dl(self, bot: str, full_name: str):
-        try:
-            return (await self._client.inline_query(bot, full_name))[0].document
-        except Exception:
-            return None
-
-    async def _legacy(self, full_name: str):
-        document = await self._dl("@vkm4bot", full_name)
-        document = (
-            await self._dl("@spotifysavebot", full_name) if not document else document
-        )
-        document = await self._dl("@lybot", full_name) if not document else document
-        return document
-
-    async def dl(
-        self,
-        full_name: str,
-        only_document: bool = False,
-        retries: int = 0,
-    ) -> typing.Union[Document, str]:
-        try:
-            if not self.config["lossless_priority"]:
-                document = await self._legacy(full_name)
-
-            if self.config["lossless_priority"] or not document:
-                try:
-                    q = await self._client.inline_query("@losslessrobot", full_name)
-                except BotResponseTimeoutError:
-                    if retries >= self.config["retries"]:
-                        raise Exception("Failed to download")
-
-                    await asyncio.sleep(3)
-                    return await self.dl(full_name, only_document, retries + 1)
-
-                result = q.result.results[0]
-                if not getattr(
-                    getattr(result, "send_message", None), "reply_markup", None
-                ):
-                    document = result.document
-                    if text := getattr(
-                        getattr(result, "send_message", None), "message", None
-                    ):
-                        if "FLAC" in text:
-                            document.is_flac = True
-                else:
-                    m = await q[0].click("me")
-
-                    dl_event = asyncio.Event()
-                    document = None
-
-                    @self._client.on(MessageEdited(chats=utils.get_chat_id(m)))
-                    async def handler(event: MessageEdited):
-                        nonlocal document
-                        try:
-                            if (
-                                event.message.id == m.id
-                                and (
-                                    not getattr(event.message, "reply_markup", None)
-                                    or all(
-                                        button.text
-                                        != "Подождите, трек скоро скачается."
-                                        for button in utils.array_sum(
-                                            [
-                                                row.buttons
-                                                for row in event.message.reply_markup.rows
-                                            ]
-                                        )
-                                    )
-                                )
-                                and event.message.document
-                            ):
-                                document = event.message.document
-                                if text := getattr(event.message, "message", None):
-                                    if "FLAC" in text:
-                                        document.is_flac = True
-                                dl_event.set()
-
-                                raise StopPropagation
-                        except StopPropagation:
-                            raise
-                        except Exception:
-                            logging.exception("Failed to download")
-
-                    try:
-                        await asyncio.wait_for(
-                            dl_event.wait(),
-                            timeout=self.config["timeout"],
-                        )
-                    except Exception:
-                        await m.delete()
-                        document = None
-                    else:
-                        await m.delete()
-        except Exception:
-            logging.debug("Can't download", exc_info=True)
-            document = None
-
-        if not document:
-            document = await self._legacy(full_name)
-
-        if not document:
-            return None
-
-        if only_document:
-            return document
-
-        file = io.BytesIO(await self._client.download_file(document, bytes))
-        file.name = "audio.mp3"
-
-        try:
-            skynet = await utils.run_sync(
-                requests.post,
-                "https://siasky.net/skynet/skyfile",
-                files={"file": file},
             )
-        except ConnectionError:
-            return None
+        )
 
-        return f"https://siasky.net/{skynet.json()['skylink']}"
+    def get_platform(self):
+        system = platform.system()
+        machine = platform.machine()
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+        return system, machine, python_version
+
+    async def run_command(self, command: list):
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            raise Exception(f"Command failed: {stderr.decode().strip()}")
+        return stdout.decode().strip()
+
+    async def install_pytg(self):
+        platform_info = self.get_platform()
+        whl_file = WHL_FILES.get(platform_info)
+
+        if not whl_file:
+            logging.error(f"Не найден подходящий файл для платформы: {platform_info}")
+            return
+
+        whl_url = f"{GITHUB_REPO}/{whl_file}"
+        timeout = self.config["timeout"]
+
+        try:
+            command = [sys.executable, "-m", "pip", "install", "--force-reinstall", whl_url]
+            output = await asyncio.wait_for(self.run_command(command), timeout=timeout)
+            logging.info(f"Успешная установка: {output}")
+        except Exception as e:
+            logging.error(f"Ошибка при установке: {e}")

@@ -48,20 +48,22 @@ WHL_FILES = {
         ("Darwin", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-macosx_10_15_x86_64.whl",
     }
 
+
+def get_platform():
+    """Определение платформы и архитектуры."""
+    system = platform.system()
+    machine = platform.machine()
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    return system, machine, python_version
+
+
 class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 
-    def get_platform(self):
-        """Определение платформы и архитектуры."""
-        system = platform.system()
-        machine = platform.machine()
-        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-        return system, machine, python_version
-
-    async def install_pytg(self):
+    async def install_pytg():
         """Установка подходящего файла .whl."""
-        platform_info = self.get_platform()
+        platform_info = get_platform()
         whl_file = WHL_FILES.get(platform_info)
 
         if not whl_file:

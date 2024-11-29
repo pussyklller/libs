@@ -1,9 +1,11 @@
+
 import asyncio
 import platform
+import subprocess
 import sys
 import logging
-from .. import loader
-
+import importlib.metadata
+from .. import loader, utils
 
 GITHUB_REPO = "https://github.com/pvssykiller/py-tgcalls_host/tree/main"
 
@@ -40,63 +42,14 @@ WHL_FILES = {
     }
 
 
-class TestLoadLIB(loader.Library):
-    """Library for installing Py-TgCalls"""
+def get_platform():
+    """Определение платформы и архитектуры."""
+    system = platform.system()
+    machine = platform.machine()
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    return system, machine, python_version
 
+
+class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
-
-    async def client_ready(self):
-        """
-        Метод, вызываемый, когда клиент готов. Проверяет, установлена ли библиотека,
-        и выполняет установку, если необходимо.
-        """
-        try:
-            await self.install_pytg()
-        except Exception as e:
-            raise loader.LoadError(f"Ошибка загрузки библиотеки: {e}")
-
-    def get_platform(self):
-        """
-        Определение платформы и архитектуры для выбора подходящего файла.
-        """
-        system = platform.system()
-        machine = platform.machine()
-        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-        return system, machine, python_version
-
-    async def run_command(self, command: list):
-        """
-        Выполнение системной команды в асинхронном режиме.
-        """
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            raise Exception(f"Команда завершилась ошибкой: {stderr.decode().strip()}")
-        return stdout.decode().strip()
-
-    async def install_pytg(self):
-        """
-        Установка библиотеки Py-TgCalls, если она отсутствует или версия не соответствует.
-        """
-        platform_info = self.get_platform()
-        whl_file = WHL_FILES.get(platform_info)
-
-        if not whl_file:
-            logging.error(f"Не найден подходящий файл для платформы: {platform_info}")
-            return
-
-        whl_url = f"{GITHUB_REPO}/{whl_file}"
-        command = [sys.executable, "-m", "pip", "install", "--force-reinstall", whl_url]
-
-        try:
-            logging.info(f"Начинаем установку библиотеки из {whl_url}")
-            output = await self.run_command(command)
-            logging.info(f"Успешная установка: {output}")
-        except Exception as e:
-            raise loader.LoadError(f"Ошибка при установке библиотеки: {e}")
-

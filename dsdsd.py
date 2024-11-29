@@ -45,10 +45,7 @@ class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 
-    def __init__(self):
-        self.GITHUB_REPO = "https://github.com/pvssykiller/py-tgcalls_host/tree/main"
-
-    def get_platform(self):
+    def get_platform():
         """Определение платформы и архитектуры."""
         system = platform.system()
         machine = platform.machine()

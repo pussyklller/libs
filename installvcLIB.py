@@ -50,7 +50,7 @@ WHL_FILES = {
 
 class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
-    version = (1, 0, 0)
+    version = (2, 0, 0)
 
     def get_platform(self):
         """Определение платформы и архитектуры."""
@@ -65,32 +65,34 @@ class TestLoadLIB(loader.Library):
         whl_file = WHL_FILES.get(platform_info)
 
         if not whl_file:
-            logging.debug(f"Не найден подходящий файл для платформы: {platform_info}")
+            logging.error(f"Не найден подходящий файл для платформы: {platform_info}")
             return
 
         whl_url = f"{GITHUB_REPO}/{whl_file}"
-
         library_name, version = whl_file.split('-')[:2]
 
         try:
             installed_version = importlib.metadata.version(library_name)
             if installed_version == version:
-                logging.debug(f"Библиотека {library_name} версии {version} уже установлена.")
+                logging.info(f"Библиотека {library_name} версии {version} уже установлена.")
                 return
             else:
-                logging.debug(
-                    f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}."
-                )
+                logging.info(
+                    f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}.")
         except importlib.metadata.PackageNotFoundError:
-            logging.debug(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
+            logging.info(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
 
-        logging.debug(f"Устанавливаем: {whl_url}")
+        logging.info(f"Устанавливаем: {whl_url}")
 
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "--force-reinstall", whl_url])
-            logging.debug("Установка завершена успешно!")
+            logging.info("Установка завершена успешно!")
         except subprocess.CalledProcessError as e:
-            logging.debug(f"Ошибка при установке: {e}")
+            logging.error(f"Ошибка при установке библиотеки: {e}")
+            raise
+        except Exception as e:
+            logging.error(f"Неизвестная ошибка: {e}")
+            raise
 
 
 

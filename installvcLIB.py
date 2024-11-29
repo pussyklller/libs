@@ -56,7 +56,7 @@ def get_platform():
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
     return system, machine, python_version
 
-async def install_pytg():
+def install_pytg():
     """Установка подходящего файла .whl."""
     platform_info = get_platform()
     whl_file = WHL_FILES.get(platform_info)

@@ -48,11 +48,11 @@ WHL_FILES = {
         ("Darwin", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-macosx_10_15_x86_64.whl",
     }
 
-class MusicalLib(loader.Library):
+class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
-    version = (2, 0, 0)
+    version = (1, 0, 0)
 
-    def get_platform():
+    def get_platform(self):
         """Определение платформы и архитектуры."""
         system = platform.system()
         machine = platform.machine()
@@ -79,7 +79,8 @@ class MusicalLib(loader.Library):
                 return
             else:
                 logging.debug(
-                    f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}.")
+                    f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}."
+                )
         except importlib.metadata.PackageNotFoundError:
             logging.debug(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
 
@@ -90,5 +91,6 @@ class MusicalLib(loader.Library):
             logging.debug("Установка завершена успешно!")
         except subprocess.CalledProcessError as e:
             logging.debug(f"Ошибка при установке: {e}")
+
 
 

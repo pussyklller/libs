@@ -62,7 +62,7 @@ async def install_pytg(self):
     whl_file = self.WHL_FILES.get(platform_info)
 
     if not whl_file:
-        await utils.answer(f"Не найден подходящий файл для платформы: {platform_info}")
+        logging.debug(f"Не найден подходящий файл для платформы: {platform_info}")
         return
 
     whl_url = f"{GITHUB_REPO}/{whl_file}"
@@ -72,19 +72,19 @@ async def install_pytg(self):
     try:
         installed_version = importlib.metadata.version(library_name)
         if installed_version == version:
-            await answer(f"Библиотека {library_name} версии {version} уже установлена.")
+            logging.debug(f"Библиотека {library_name} версии {version} уже установлена.")
             return
         else:
-            await utils.answer(f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}.")
+            logging.debug(f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}.")
     except importlib.metadata.PackageNotFoundError:
-        await utils.answer(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
+        logging.debug(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
 
-    await utils.answer(f"Устанавливаем: {whl_url}")
+    logging.debug(f"Устанавливаем: {whl_url}")
 
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--force-reinstall", whl_url])
-        await utils.answer("Установка завершена успешно!")
+        logging.debug("Установка завершена успешно!")
     except subprocess.CalledProcessError as e:
-        await utils.answer(f"Ошибка при установке: {e}")
+        logging.debug(f"Ошибка при установке: {e}")
 
 

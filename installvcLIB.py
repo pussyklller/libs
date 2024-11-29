@@ -52,16 +52,16 @@ class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 
-    def get_platform(self):
+    def get_platform():
         """Определение платформы и архитектуры."""
         system = platform.system()
         machine = platform.machine()
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
         return system, machine, python_version
 
-    async def install_pytg(self):
+    async def install_pytg():
         """Установка подходящего файла .whl."""
-        platform_info = self.get_platform()
+        platform_info = get_platform()
         whl_file = WHL_FILES.get(platform_info)
 
         if not whl_file:

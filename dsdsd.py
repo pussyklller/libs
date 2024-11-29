@@ -1,10 +1,9 @@
 
 import asyncio
-import platform
 import subprocess
 import sys
 import logging
-from .. import loader, utils
+from .. import loader
 
 
 class TestLoadLIB(loader.Library):

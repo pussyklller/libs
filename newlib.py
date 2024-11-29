@@ -1,18 +1,11 @@
-import asyncio
-import io
-import logging
-import typing
-import platform
-import sys
-import subprocess
-import requests
-from telethon.errors.rpcerrorlist import BotResponseTimeoutError
-from telethon.events import MessageEdited, StopPropagation
-from telethon.tl.types import Document
 
+import asyncio
+import platform
+import subprocess
+import sys
+import logging
 import importlib.metadata
 from .. import loader, utils
-
 
 GITHUB_REPO = "https://github.com/pvssykiller/py-tgcalls_host/tree/main"
 
@@ -48,53 +41,49 @@ WHL_FILES = {
         ("Darwin", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-macosx_10_15_x86_64.whl",
     }
 
-
-def get_platform():
-    """Определение платформы и архитектуры."""
-    system = platform.system()
-    machine = platform.machine()
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    return system, machine, python_version
-
-
 class TestLoadLIB(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 
-    async def install_pytg():
+    def __init__(self):
+        self.GITHUB_REPO = "https://github.com/pvssykiller/py-tgcalls_host/tree/main"
+
+    def get_platform(self):
+        """Определение платформы и архитектуры."""
+        system = platform.system()
+        machine = platform.machine()
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+        return system, machine, python_version
+
+    async def install_pytg(self):
         """Установка подходящего файла .whl."""
-        platform_info = get_platform()
+        platform_info = self.get_platform()
         whl_file = WHL_FILES.get(platform_info)
 
         if not whl_file:
-            logging.error(f"Не найден подходящий файл для платформы: {platform_info}")
+            logging.debug(f"Не найден подходящий файл для платформы: {platform_info}")
             return
 
         whl_url = f"{GITHUB_REPO}/{whl_file}"
+
         library_name, version = whl_file.split('-')[:2]
 
         try:
             installed_version = importlib.metadata.version(library_name)
             if installed_version == version:
-                logging.info(f"Библиотека {library_name} версии {version} уже установлена.")
+                logging.debug(f"Библиотека {library_name} версии {version} уже установлена.")
                 return
             else:
-                logging.info(
+                logging.debug(
                     f"Обнаружена версия {installed_version} библиотеки {library_name}. Переустанавливаем на версию {version}.")
         except importlib.metadata.PackageNotFoundError:
-            logging.info(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
+            logging.debug(f"Библиотека {library_name} не установлена. Устанавливаем версию {version}.")
 
-        logging.info(f"Устанавливаем: {whl_url}")
+        logging.debug(f"Устанавливаем: {whl_url}")
 
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "--force-reinstall", whl_url])
-            logging.info("Установка завершена успешно!")
+            logging.debug("Установка завершена успешно!")
         except subprocess.CalledProcessError as e:
-            logging.error(f"Ошибка при установке библиотеки: {e}")
-            raise
-        except Exception as e:
-            logging.error(f"Неизвестная ошибка: {e}")
-            raise
-
-
+            logging.debug(f"Ошибка при установке: {e}")
 

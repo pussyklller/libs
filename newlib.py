@@ -41,7 +41,7 @@ WHL_FILES = {
         ("Darwin", "x86_64", "3.7"): "py_tgcalls-0.9.7-cp37-cp37m-macosx_10_15_x86_64.whl",
     }
 
-class TestLoadLIB(loader.Library):
+class TestLLL(loader.Library):
     developer = "@its_pussykiller"
     version = (2, 0, 0)
 

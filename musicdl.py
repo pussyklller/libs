@@ -8,7 +8,7 @@ from telethon.events import MessageEdited, StopPropagation
 from telethon.tl.types import Document
 from .. import loader, utils
 class MusicDLLib(loader.Library):
-    developer = "@its_pussykiller"
+    developer = "@hikariatama"
     version = (1, 0, 19)
     def __init__(self):
         self.config = loader.LibraryConfig(
